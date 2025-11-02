@@ -1,0 +1,1096 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flowchart Generator</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: #f8f9fa;
+            min-height: 100vh;
+            padding: 40px 20px;
+        }
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+        header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+        h1 {
+            color: #1a202c;
+            font-size: 2.5em;
+            font-weight: 700;
+            margin-bottom: 8px;
+            letter-spacing: -0.5px;
+        }
+        .subtitle {
+            color: #718096;
+            font-size: 1.1em;
+            font-weight: 400;
+        }
+        .controls {
+            background: white;
+            padding: 24px;
+            border-radius: 12px;
+            margin-bottom: 24px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+            border: 1px solid #e2e8f0;
+        }
+        .btn-group {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+        button {
+            padding: 10px 20px;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.2s ease;
+            background: white;
+            color: #2d3748;
+        }
+        button:hover {
+            background: #f7fafc;
+            border-color: #cbd5e0;
+            transform: translateY(-1px);
+        }
+        button.active {
+            background: #2563eb;
+            color: white;
+            border-color: #2563eb;
+        }
+        button.active:hover {
+            background: #1d4ed8;
+            border-color: #1d4ed8;
+        }
+        .canvas-controls {
+            display: flex;
+            gap: 12px;
+            margin-top: 12px;
+            padding-top: 12px;
+            border-top: 1px solid #e2e8f0;
+        }
+        #flowchart {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+            border: 1px solid #e2e8f0;
+            overflow: auto;
+            min-height: 700px;
+            position: relative;
+        }
+        .node {
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+        .node:hover {
+            filter: brightness(0.98);
+        }
+        .node:hover .node-shadow {
+            opacity: 0.15;
+        }
+        .node-shadow {
+            opacity: 0.08;
+            transition: opacity 0.15s ease;
+        }
+        .node-rect {
+            fill: white;
+            stroke: #2563eb;
+            stroke-width: 2;
+        }
+        .node-diamond {
+            fill: white;
+            stroke: #dc2626;
+            stroke-width: 2;
+        }
+        .node-circle {
+            fill: white;
+            stroke: #059669;
+            stroke-width: 2;
+        }
+        .node-database {
+            fill: white;
+            stroke: #7c3aed;
+            stroke-width: 2;
+        }
+        .node-text {
+            fill: #1a202c;
+            font-size: 13px;
+            font-weight: 500;
+            text-anchor: middle;
+            dominant-baseline: middle;
+            pointer-events: none;
+        }
+        .node-icon {
+            fill: #64748b;
+            font-size: 16px;
+            font-weight: 600;
+            text-anchor: middle;
+            dominant-baseline: middle;
+            pointer-events: none;
+        }
+        .connection {
+            fill: none;
+            stroke: #94a3b8;
+            stroke-width: 2;
+            marker-end: url(#arrowhead);
+        }
+        .connection-label {
+            fill: #64748b;
+            font-size: 11px;
+            font-weight: 500;
+            background: white;
+        }
+        .connection-label-bg {
+            fill: white;
+            opacity: 0.9;
+        }
+        .zoom-controls {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            background: white;
+            padding: 8px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            border: 1px solid #e2e8f0;
+        }
+        .zoom-btn {
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: none;
+            background: white;
+            cursor: pointer;
+            border-radius: 6px;
+            font-size: 18px;
+            color: #475569;
+            padding: 0;
+        }
+        .zoom-btn:hover {
+            background: #f1f5f9;
+            transform: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Flowchart Generator</h1>
+            <p class="subtitle">Create professional flowcharts from JSON data</p>
+        </header>
+        
+        <div class="controls">
+            <div class="btn-group">
+                <button onclick="loadExample('simple')">Simple Process</button>
+                <button onclick="loadExample('decision')">Decision Tree</button>
+                <button onclick="loadExample('auth')">User Authentication</button>
+                <button onclick="loadExample('ecommerce')">E-commerce Checkout</button>
+                <button onclick="loadExample('approval')">Approval Workflow</button>
+                <button onclick="loadExample('data')">Data Pipeline</button>
+            </div>
+            <div class="canvas-controls">
+                <button onclick="resetView()">Reset View</button>
+                <button onclick="exportSVG()">Export SVG</button>
+            </div>
+        </div>
+        
+        <div id="flowchart">
+            <div class="zoom-controls">
+                <button class="zoom-btn" onclick="zoomIn()">+</button>
+                <button class="zoom-btn" onclick="zoomOut()">−</button>
+                <button class="zoom-btn" onclick="resetView()">⟲</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        class FlowchartGenerator {
+            constructor(containerId) {
+                this.container = document.getElementById(containerId);
+                this.nodeWidth = 160;
+                this.nodeHeight = 50;
+                this.horizontalSpacing = 80;
+                this.verticalSpacing = 100;
+                this.svg = null;
+                this.svgGroup = null;
+                this.nodes = {};
+                this.scale = 1;
+                this.translateX = 0;
+                this.translateY = 0;
+            }
+
+            generate(data) {
+                const zoomControls = this.container.querySelector('.zoom-controls');
+                this.container.innerHTML = '';
+                if (zoomControls) {
+                    this.container.appendChild(zoomControls);
+                }
+                
+                const layout = this.calculateLayout(data);
+                
+                const svgWidth = layout.width + 100;
+                const svgHeight = layout.height + 100;
+                
+                this.svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+                this.svg.setAttribute('width', '100%');
+                this.svg.setAttribute('height', '100%');
+                this.svg.setAttribute('viewBox', `0 0 ${svgWidth} ${svgHeight}`);
+                this.svg.style.minHeight = '700px';
+                
+                const defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
+                
+                const marker = document.createElementNS('http://www.w3.org/2000/svg', 'marker');
+                marker.setAttribute('id', 'arrowhead');
+                marker.setAttribute('markerWidth', '8');
+                marker.setAttribute('markerHeight', '8');
+                marker.setAttribute('refX', '7');
+                marker.setAttribute('refY', '4');
+                marker.setAttribute('orient', 'auto');
+                
+                const polygon = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
+                polygon.setAttribute('points', '0 0, 8 4, 0 8');
+                polygon.setAttribute('fill', '#94a3b8');
+                
+                marker.appendChild(polygon);
+                defs.appendChild(marker);
+                
+                const filter = document.createElementNS('http://www.w3.org/2000/svg', 'filter');
+                filter.setAttribute('id', 'shadow');
+                filter.setAttribute('x', '-50%');
+                filter.setAttribute('y', '-50%');
+                filter.setAttribute('width', '200%');
+                filter.setAttribute('height', '200%');
+                
+                const feGaussianBlur = document.createElementNS('http://www.w3.org/2000/svg', 'feGaussianBlur');
+                feGaussianBlur.setAttribute('in', 'SourceAlpha');
+                feGaussianBlur.setAttribute('stdDeviation', '3');
+                
+                const feOffset = document.createElementNS('http://www.w3.org/2000/svg', 'feOffset');
+                feOffset.setAttribute('dx', '0');
+                feOffset.setAttribute('dy', '2');
+                feOffset.setAttribute('result', 'offsetblur');
+                
+                const feMerge = document.createElementNS('http://www.w3.org/2000/svg', 'feMerge');
+                const feMergeNode1 = document.createElementNS('http://www.w3.org/2000/svg', 'feMergeNode');
+                const feMergeNode2 = document.createElementNS('http://www.w3.org/2000/svg', 'feMergeNode');
+                feMergeNode2.setAttribute('in', 'SourceGraphic');
+                
+                feMerge.appendChild(feMergeNode1);
+                feMerge.appendChild(feMergeNode2);
+                
+                filter.appendChild(feGaussianBlur);
+                filter.appendChild(feOffset);
+                filter.appendChild(feMerge);
+                
+                defs.appendChild(filter);
+                this.svg.appendChild(defs);
+                
+                this.svgGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+                this.svg.appendChild(this.svgGroup);
+                
+                this.drawConnections(data, layout);
+                this.drawNodes(data, layout);
+                
+                this.container.insertBefore(this.svg, this.container.firstChild);
+                
+                this.scale = 1;
+                this.updateTransform();
+            }
+
+            calculateLayout(data) {
+                const positions = {};
+                const levels = {};
+                
+                const queue = [{ node: data, level: 0, parent: null }];
+                const visited = new Set();
+                let maxLevel = 0;
+                const levelNodes = {};
+                
+                while (queue.length > 0) {
+                    const { node, level } = queue.shift();
+                    
+                    if (visited.has(node.id)) continue;
+                    visited.add(node.id);
+                    
+                    levels[node.id] = level;
+                    maxLevel = Math.max(maxLevel, level);
+                    
+                    if (!levelNodes[level]) levelNodes[level] = [];
+                    levelNodes[level].push(node.id);
+                    
+                    if (node.next) {
+                        if (Array.isArray(node.next)) {
+                            node.next.forEach(nextNode => {
+                                queue.push({ node: nextNode.node, level: level + 1, parent: node.id });
+                            });
+                        } else {
+                            queue.push({ node: node.next, level: level + 1, parent: node.id });
+                        }
+                    }
+                }
+                
+                Object.keys(levelNodes).forEach(level => {
+                    const nodesInLevel = levelNodes[level];
+                    const levelWidth = nodesInLevel.length * (this.nodeWidth + this.horizontalSpacing);
+                    
+                    nodesInLevel.forEach((nodeId, index) => {
+                        const x = 50 + (levelWidth / 2) - ((nodesInLevel.length - 1) * (this.nodeWidth + this.horizontalSpacing) / 2) + 
+                                  index * (this.nodeWidth + this.horizontalSpacing);
+                        const y = 50 + parseInt(level) * (this.nodeHeight + this.verticalSpacing);
+                        
+                        positions[nodeId] = { x, y };
+                    });
+                });
+                
+                const allX = Object.values(positions).map(p => p.x);
+                const allY = Object.values(positions).map(p => p.y);
+                const width = Math.max(...allX) + this.nodeWidth + 50;
+                const height = Math.max(...allY) + this.nodeHeight + 50;
+                
+                return { positions, width, height };
+            }
+
+            drawNodes(data, layout) {
+                const queue = [data];
+                const visited = new Set();
+                
+                while (queue.length > 0) {
+                    const node = queue.shift();
+                    
+                    if (visited.has(node.id)) continue;
+                    visited.add(node.id);
+                    
+                    const pos = layout.positions[node.id];
+                    this.drawNode(node, pos.x, pos.y);
+                    this.nodes[node.id] = { node, pos };
+                    
+                    if (node.next) {
+                        if (Array.isArray(node.next)) {
+                            node.next.forEach(nextNode => queue.push(nextNode.node));
+                        } else {
+                            queue.push(node.next);
+                        }
+                    }
+                }
+            }
+
+            drawNode(node, x, y) {
+                const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+                g.setAttribute('class', 'node');
+                
+                const shadow = this.createNodeShape(node.type, x, y);
+                shadow.setAttribute('class', 'node-shadow');
+                shadow.setAttribute('filter', 'url(#shadow)');
+                shadow.setAttribute('fill', '#000');
+                g.appendChild(shadow);
+                
+                const shape = this.createNodeShape(node.type, x, y);
+                const shapeClass = {
+                    'decision': 'node-diamond',
+                    'start': 'node-circle',
+                    'end': 'node-circle',
+                    'database': 'node-database'
+                }[node.type] || 'node-rect';
+                shape.setAttribute('class', shapeClass);
+                g.appendChild(shape);
+                
+                const text = this.createWrappedText(node.label, x + this.nodeWidth/2, y + this.nodeHeight/2, this.nodeWidth - 20);
+                g.appendChild(text);
+                
+                this.svgGroup.appendChild(g);
+            }
+
+            createNodeShape(type, x, y) {
+                if (type === 'decision') {
+                    const diamond = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
+                    const points = `${x + this.nodeWidth/2},${y} ${x + this.nodeWidth},${y + this.nodeHeight/2} ${x + this.nodeWidth/2},${y + this.nodeHeight} ${x},${y + this.nodeHeight/2}`;
+                    diamond.setAttribute('points', points);
+                    return diamond;
+                } else if (type === 'start' || type === 'end') {
+                    const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+                    rect.setAttribute('x', x);
+                    rect.setAttribute('y', y);
+                    rect.setAttribute('width', this.nodeWidth);
+                    rect.setAttribute('height', this.nodeHeight);
+                    rect.setAttribute('rx', this.nodeHeight / 2);
+                    return rect;
+                } else if (type === 'database') {
+                    const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                    const cy = 8;
+                    const d = `
+                        M ${x} ${y + cy}
+                        Q ${x} ${y} ${x + this.nodeWidth/2} ${y}
+                        Q ${x + this.nodeWidth} ${y} ${x + this.nodeWidth} ${y + cy}
+                        L ${x + this.nodeWidth} ${y + this.nodeHeight - cy}
+                        Q ${x + this.nodeWidth} ${y + this.nodeHeight} ${x + this.nodeWidth/2} ${y + this.nodeHeight}
+                        Q ${x} ${y + this.nodeHeight} ${x} ${y + this.nodeHeight - cy}
+                        Z
+                        M ${x} ${y + cy}
+                        Q ${x} ${y + cy*2} ${x + this.nodeWidth/2} ${y + cy*2}
+                        Q ${x + this.nodeWidth} ${y + cy*2} ${x + this.nodeWidth} ${y + cy}
+                    `;
+                    path.setAttribute('d', d);
+                    return path;
+                } else {
+                    const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+                    rect.setAttribute('x', x);
+                    rect.setAttribute('y', y);
+                    rect.setAttribute('width', this.nodeWidth);
+                    rect.setAttribute('height', this.nodeHeight);
+                    rect.setAttribute('rx', 6);
+                    return rect;
+                }
+            }
+
+            createWrappedText(text, x, y, maxWidth) {
+                const words = text.split(' ');
+                const lines = [];
+                let currentLine = '';
+                
+                words.forEach(word => {
+                    const testLine = currentLine ? `${currentLine} ${word}` : word;
+                    if (testLine.length * 7 > maxWidth && currentLine) {
+                        lines.push(currentLine);
+                        currentLine = word;
+                    } else {
+                        currentLine = testLine;
+                    }
+                });
+                if (currentLine) lines.push(currentLine);
+                
+                const textElement = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                textElement.setAttribute('class', 'node-text');
+                
+                const lineHeight = 15;
+                const startY = y - ((lines.length - 1) * lineHeight) / 2;
+                
+                lines.forEach((line, i) => {
+                    const tspan = document.createElementNS('http://www.w3.org/2000/svg', 'tspan');
+                    tspan.setAttribute('x', x);
+                    tspan.setAttribute('y', startY + i * lineHeight);
+                    tspan.textContent = line;
+                    textElement.appendChild(tspan);
+                });
+                
+                return textElement;
+            }
+
+            drawConnections(data, layout) {
+                const queue = [data];
+                const visited = new Set();
+                
+                while (queue.length > 0) {
+                    const node = queue.shift();
+                    
+                    if (visited.has(node.id)) continue;
+                    visited.add(node.id);
+                    
+                    if (node.next) {
+                        if (Array.isArray(node.next)) {
+                            node.next.forEach(nextItem => {
+                                this.drawConnection(
+                                    layout.positions[node.id],
+                                    layout.positions[nextItem.node.id],
+                                    nextItem.label,
+                                    node.type
+                                );
+                                queue.push(nextItem.node);
+                            });
+                        } else {
+                            this.drawConnection(
+                                layout.positions[node.id],
+                                layout.positions[node.next.id],
+                                null,
+                                node.type
+                            );
+                            queue.push(node.next);
+                        }
+                    }
+                }
+            }
+
+            drawConnection(from, to, label, fromType) {
+                const startX = from.x + this.nodeWidth / 2;
+                const startY = from.y + this.nodeHeight;
+                const endX = to.x + this.nodeWidth / 2;
+                const endY = to.y;
+                
+                const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                const midY = (startY + endY) / 2;
+                
+                const d = `M ${startX} ${startY} C ${startX} ${midY}, ${endX} ${midY}, ${endX} ${endY}`;
+                path.setAttribute('d', d);
+                path.setAttribute('class', 'connection');
+                
+                this.svgGroup.appendChild(path);
+                
+                if (label) {
+                    const labelX = (startX + endX) / 2 + 15;
+                    const labelY = midY;
+                    
+                    const bbox = this.getTextBBox(label);
+                    const padding = 4;
+                    
+                    const bg = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+                    bg.setAttribute('x', labelX - padding);
+                    bg.setAttribute('y', labelY - bbox.height/2 - padding);
+                    bg.setAttribute('width', bbox.width + padding * 2);
+                    bg.setAttribute('height', bbox.height + padding * 2);
+                    bg.setAttribute('rx', 3);
+                    bg.setAttribute('class', 'connection-label-bg');
+                    this.svgGroup.appendChild(bg);
+                    
+                    const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                    text.setAttribute('x', labelX + bbox.width/2);
+                    text.setAttribute('y', labelY);
+                    text.setAttribute('class', 'connection-label');
+                    text.setAttribute('text-anchor', 'middle');
+                    text.setAttribute('dominant-baseline', 'middle');
+                    text.textContent = label;
+                    this.svgGroup.appendChild(text);
+                }
+            }
+
+            getTextBBox(text) {
+                return { width: text.length * 6, height: 12 };
+            }
+
+            updateTransform() {
+                if (this.svgGroup) {
+                    this.svgGroup.setAttribute('transform', `translate(${this.translateX}, ${this.translateY}) scale(${this.scale})`);
+                }
+            }
+
+            zoom(delta) {
+                this.scale = Math.max(0.3, Math.min(2, this.scale + delta));
+                this.updateTransform();
+            }
+
+            reset() {
+                this.scale = 1;
+                this.translateX = 0;
+                this.translateY = 0;
+                this.updateTransform();
+            }
+        }
+
+        const flowchart = new FlowchartGenerator('flowchart');
+
+        const examples = {
+            simple: {
+                id: 'start',
+                type: 'start',
+                label: 'Start',
+                next: {
+                    id: 'input',
+                    type: 'process',
+                    label: 'Get User Input',
+                    next: {
+                        id: 'process',
+                        type: 'process',
+                        label: 'Process Data',
+                        next: {
+                            id: 'output',
+                            type: 'process',
+                            label: 'Display Result',
+                            next: {
+                                id: 'end',
+                                type: 'end',
+                                label: 'End'
+                            }
+                        }
+                    }
+                }
+            },
+            decision: {
+                id: 'start',
+                type: 'start',
+                label: 'Start',
+                next: {
+                    id: 'check',
+                    type: 'decision',
+                    label: 'Is Valid?',
+                    next: [
+                        {
+                            label: 'Yes',
+                            node: {
+                                id: 'process',
+                                type: 'process',
+                                label: 'Process Request',
+                                next: {
+                                    id: 'success',
+                                    type: 'process',
+                                    label: 'Show Success',
+                                    next: {
+                                        id: 'end1',
+                                        type: 'end',
+                                        label: 'End'
+                                    }
+                                }
+                            }
+                        },
+                        {
+                            label: 'No',
+                            node: {
+                                id: 'error',
+                                type: 'process',
+                                label: 'Show Error',
+                                next: {
+                                    id: 'end2',
+                                    type: 'end',
+                                    label: 'End'
+                                }
+                            }
+                        }
+                    ]
+                }
+            },
+            auth: {
+                id: 'start',
+                type: 'start',
+                label: 'User Login',
+                next: {
+                    id: 'input',
+                    type: 'process',
+                    label: 'Enter Credentials',
+                    next: {
+                        id: 'validate',
+                        type: 'process',
+                        label: 'Validate Input',
+                        next: {
+                            id: 'checkFormat',
+                            type: 'decision',
+                            label: 'Format Valid?',
+                            next: [
+                                {
+                                    label: 'Yes',
+                                    node: {
+                                        id: 'checkDb',
+                                        type: 'database',
+                                        label: 'Query Database',
+                                        next: {
+                                            id: 'userExists',
+                                            type: 'decision',
+                                            label: 'User Exists?',
+                                            next: [
+                                                {
+                                                    label: 'Yes',
+                                                    node: {
+                                                        id: 'checkPass',
+                                                        type: 'decision',
+                                                        label: 'Password Match?',
+                                                        next: [
+                                                            {
+                                                                label: 'Yes',
+                                                                node: {
+                                                                    id: 'session',
+                                                                    type: 'process',
+                                                                    label: 'Create Session',
+                                                                    next: {
+                                                                        id: 'success',
+                                                                        type: 'end',
+                                                                        label: 'Login Success'
+                                                                    }
+                                                                }
+                                                            },
+                                                            {
+                                                                label: 'No',
+                                                                node: {
+                                                                    id: 'wrongPass',
+                                                                    type: 'process',
+                                                                    label: 'Wrong Password',
+                                                                    next: {
+                                                                        id: 'fail2',
+                                                                        type: 'end',
+                                                                        label: 'Login Failed'
+                                                                    }
+                                                                }
+                                                            }
+                                                        ]
+                                                    }
+                                                },
+                                                {
+                                                    label: 'No',
+                                                    node: {
+                                                        id: 'notFound',
+                                                        type: 'process',
+                                                        label: 'User Not Found',
+                                                        next: {
+                                                            id: 'fail3',
+                                                            type: 'end',
+                                                            label: 'Login Failed'
+                                                        }
+                                                    }
+                                                }
+                                            ]
+                                        }
+                                    }
+                                },
+                                {
+                                    label: 'No',
+                                    node: {
+                                        id: 'formatError',
+                                        type: 'process',
+                                        label: 'Show Format Error',
+                                        next: {
+                                            id: 'fail1',
+                                            type: 'end',
+                                            label: 'Login Failed'
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            },
+            ecommerce: {
+                id: 'start',
+                type: 'start',
+                label: 'Start Checkout',
+                next: {
+                    id: 'cart',
+                    type: 'process',
+                    label: 'Review Cart',
+                    next: {
+                        id: 'checkStock',
+                        type: 'decision',
+                        label: 'Items Available?',
+                        next: [
+                            {
+                                label: 'Yes',
+                                node: {
+                                    id: 'shipping',
+                                    type: 'process',
+                                    label: 'Enter Shipping Info',
+                                    next: {
+                                        id: 'payment',
+                                        type: 'process',
+                                        label: 'Enter Payment',
+                                        next: {
+                                            id: 'validate',
+                                            type: 'decision',
+                                            label: 'Payment Valid?',
+                                            next: [
+                                                {
+                                                    label: 'Yes',
+                                                    node: {
+                                                        id: 'process',
+                                                        type: 'process',
+                                                        label: 'Process Payment',
+                                                        next: {
+                                                            id: 'charged',
+                                                            type: 'decision',
+                                                            label: 'Charge Success?',
+                                                            next: [
+                                                                {
+                                                                    label: 'Yes',
+                                                                    node: {
+                                                                        id: 'confirm',
+                                                                        type: 'process',
+                                                                        label: 'Send Confirmation',
+                                                                        next: {
+                                                                            id: 'success',
+                                                                            type: 'end',
+                                                                            label: 'Order Complete'
+                                                                        }
+                                                                    }
+                                                                },
+                                                                {
+                                                                    label: 'No',
+                                                                    node: {
+                                                                        id: 'failed',
+                                                                        type: 'process',
+                                                                        label: 'Payment Failed',
+                                                                        next: {
+                                                                            id: 'end1',
+                                                                            type: 'end',
+                                                                            label: 'Order Cancelled'
+                                                                        }
+                                                                    }
+                                                                }
+                                                            ]
+                                                        }
+                                                    }
+                                                },
+                                                {
+                                                    label: 'No',
+                                                    node: {
+                                                        id: 'invalid',
+                                                        type: 'process',
+                                                        label: 'Invalid Payment',
+                                                        next: {
+                                                            id: 'end2',
+                                                            type: 'end',
+                                                            label: 'Order Cancelled'
+                                                        }
+                                                    }
+                                                }
+                                            ]
+                                        }
+                                    }
+                                }
+                            },
+                            {
+                                label: 'No',
+                                node: {
+                                    id: 'outofstock',
+                                    type: 'process',
+                                    label: 'Items Out of Stock',
+                                    next: {
+                                        id: 'end3',
+                                        type: 'end',
+                                        label: 'Order Cancelled'
+                                    }
+                                }
+                            }
+                        ]
+                    }
+                }
+            },
+            approval: {
+                id: 'start',
+                type: 'start',
+                label: 'Request Submitted',
+                next: {
+                    id: 'checkAmount',
+                    type: 'decision',
+                    label: 'Amount > $10k?',
+                    next: [
+                        {
+                            label: 'Yes',
+                            node: {
+                                id: 'manager',
+                                type: 'process',
+                                label: 'Manager Review',
+                                next: {
+                                    id: 'managerDecision',
+                                    type: 'decision',
+                                    label: 'Manager Approves?',
+                                    next: [
+                                        {
+                                            label: 'Yes',
+                                            node: {
+                                                id: 'director',
+                                                type: 'process',
+                                                label: 'Director Review',
+                                                next: {
+                                                    id: 'directorDecision',
+                                                    type: 'decision',
+                                                    label: 'Director Approves?',
+                                                    next: [
+                                                        {
+                                                            label: 'Yes',
+                                                            node: {
+                                                                id: 'approved',
+                                                                type: 'process',
+                                                                label: 'Send Approval',
+                                                                next: {
+                                                                    id: 'success',
+                                                                    type: 'end',
+                                                                    label: 'Approved'
+                                                                }
+                                                            }
+                                                        },
+                                                        {
+                                                            label: 'No',
+                                                            node: {
+                                                                id: 'rejected1',
+                                                                type: 'process',
+                                                                label: 'Send Rejection',
+                                                                next: {
+                                                                    id: 'end1',
+                                                                    type: 'end',
+                                                                    label: 'Rejected'
+                                                                }
+                                                            }
+                                                        }
+                                                    ]
+                                                }
+                                            }
+                                        },
+                                        {
+                                            label: 'No',
+                                            node: {
+                                                id: 'rejected2',
+                                                type: 'process',
+                                                label: 'Send Rejection',
+                                                next: {
+                                                    id: 'end2',
+                                                    type: 'end',
+                                                    label: 'Rejected'
+                                                }
+                                            }
+                                        }
+                                    ]
+                                }
+                            }
+                        },
+                        {
+                            label: 'No',
+                            node: {
+                                id: 'autoApprove',
+                                type: 'process',
+                                label: 'Auto Approve',
+                                next: {
+                                    id: 'notify',
+                                    type: 'process',
+                                    label: 'Send Notification',
+                                    next: {
+                                        id: 'end3',
+                                        type: 'end',
+                                        label: 'Approved'
+                                    }
+                                }
+                            }
+                        }
+                    ]
+                }
+            },
+            data: {
+                id: 'start',
+                type: 'start',
+                label: 'Data Ingestion',
+                next: {
+                    id: 'source',
+                    type: 'database',
+                    label: 'Data Source',
+                    next: {
+                        id: 'extract',
+                        type: 'process',
+                        label: 'Extract Data',
+                        next: {
+                            id: 'checkQuality',
+                            type: 'decision',
+                            label: 'Data Valid?',
+                            next: [
+                                {
+                                    label: 'Yes',
+                                    node: {
+                                        id: 'transform',
+                                        type: 'process',
+                                        label: 'Transform Data',
+                                        next: {
+                                            id: 'enrich',
+                                            type: 'process',
+                                            label: 'Enrich Data',
+                                            next: {
+                                                id: 'validate',
+                                                type: 'decision',
+                                                label: 'Schema Valid?',
+                                                next: [
+                                                    {
+                                                        label: 'Yes',
+                                                        node: {
+                                                            id: 'load',
+                                                            type: 'database',
+                                                            label: 'Load to Warehouse',
+                                                            next: {
+                                                                id: 'index',
+                                                                type: 'process',
+                                                                label: 'Create Indexes',
+                                                                next: {
+                                                                    id: 'success',
+                                                                    type: 'end',
+                                                                    label: 'Pipeline Complete'
+                                                                }
+                                                            }
+                                                        }
+                                                    },
+                                                    {
+                                                        label: 'No',
+                                                        node: {
+                                                            id: 'schemaError',
+                                                            type: 'process',
+                                                            label: 'Log Schema Error',
+                                                            next: {
+                                                                id: 'end1',
+                                                                type: 'end',
+                                                                label: 'Pipeline Failed'
+                                                            }
+                                                        }
+                                                    }
+                                                ]
+                                            }
+                                        }
+                                    }
+                                },
+                                {
+                                    label: 'No',
+                                    node: {
+                                        id: 'qualityError',
+                                        type: 'process',
+                                        label: 'Log Quality Error',
+                                        next: {
+                                            id: 'end2',
+                                            type: 'end',
+                                            label: 'Pipeline Failed'
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        };
+
+        function loadExample(name) {
+            document.querySelectorAll('.btn-group button').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+            
+            flowchart.generate(examples[name]);
+        }
+
+        function zoomIn() {
+            flowchart.zoom(0.1);
+        }
+
+        function zoomOut() {
+            flowchart.zoom(-0.1);
+        }
+
+        function resetView() {
+            flowchart.reset();
+        }
+
+        function exportSVG() {
+            const svg = document.querySelector('#flowchart svg');
+            if (!svg) return;
+            
+            const serializer = new XMLSerializer();
+            const svgString = serializer.serializeToString(svg);
+            const blob = new Blob([svgString], { type: 'image/svg+xml' });
+            const url = URL.createObjectURL(blob);
+            
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'flowchart.svg';
+            a.click();
+            
+            URL.revokeObjectURL(url);
+        }
+
+        loadExample('simple');
+    </script>
+</body>
+</html>
