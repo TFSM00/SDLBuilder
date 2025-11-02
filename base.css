@@ -1,0 +1,344 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+    height: 100vh;
+    overflow: hidden;
+    background: #f5f5f5;
+}
+
+.toolbar {
+    background: white;
+    padding: 16px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    display: flex;
+    gap: 12px;
+    align-items: center;
+}
+
+.toolbar select {
+    padding: 8px 12px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 14px;
+    cursor: pointer;
+}
+
+.toolbar button {
+    padding: 8px 16px;
+    background: #007bff;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.toolbar button:hover {
+    background: #0056b3;
+}
+
+.workspace {
+    position: relative;
+    height: calc(100vh - 64px);
+    overflow: auto;
+}
+
+.deal-form {
+    position: absolute;
+    background: white;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    min-width: 300px;
+    cursor: move;
+}
+
+.deal-form.dragging {
+    opacity: 0.8;
+    cursor: grabbing;
+}
+
+.deal-header {
+    background: #f8f9fa;
+    padding: 12px;
+    border-bottom: 1px solid #ddd;
+    border-radius: 8px 8px 0 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: move;
+}
+
+.deal-header h3 {
+    font-size: 14px;
+    font-weight: 600;
+    color: #333;
+}
+
+.reference-name {
+    font-size: 12px;
+    font-weight: 400;
+}
+
+.deal-actions {
+    display: flex;
+    gap: 4px;
+}
+
+.deal-actions button {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+    color: #666;
+}
+
+.deal-actions button:hover {
+    background: #e9ecef;
+}
+
+.deal-actions button:last-child {
+    color: white;
+    background: #dc3545;
+    border-radius: 50%;
+    cursor: pointer;
+    padding: 4px 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+    font-weight: bold;
+    transform: scale(0.7);
+} 
+
+.deal-actions button:last-child:hover {
+    background: #c82333;
+}
+
+.deal-body {
+    padding: 16px;
+}
+
+.form-group {
+    margin-bottom: 12px;
+}
+
+.form-group label {
+    display: block;
+    font-size: 12px;
+    font-weight: 500;
+    color: #555;
+    margin-bottom: 4px;
+}
+
+.form-group input,
+.form-group select {
+    width: 100%;
+    padding: 6px 8px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 13px;
+}
+
+.form-group input:focus,
+.form-group select:focus {
+    outline: none;
+    border-color: #007bff;
+}
+
+.cashflow-section {
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px solid #e9ecef;
+}
+
+.cashflow-section h4 {
+    font-size: 12px;
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 8px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.cashflow-controls {
+    display: flex;
+    gap: 4px;
+}
+
+.cashflow-controls button {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-size: 10px;
+    color: #666;
+}
+
+.cashflow-controls button:hover {
+    background: #e9ecef;
+}
+
+.add-cashflow-btn {
+    width: 100%;
+    padding: 6px;
+    background: #28a745;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 500;
+}
+
+.add-cashflow-btn:hover {
+    background: #218838;
+}
+
+.cashflow-list {
+    margin-top: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.cashflow-item {
+    background: #f8f9fa;
+    padding: 6px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: move;
+    border: 1px solid #dee2e6;
+}
+
+.cashflow-item:hover {
+    background: #e9ecef;
+}
+
+.cashflow-item.hidden {
+    display: none;
+}
+
+.cashflow-item.dragging {
+    opacity: 0.5;
+}
+
+.cashflow-item button {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: #007bff;
+    font-size: 10px;
+    padding: 2px 4px;
+}
+
+.cashflow-item button:hover {
+    text-decoration: underline;
+}
+
+.cashflow-form {
+    background: white;
+    border: 2px solid #28a745;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    min-width: 250px;
+    margin-top: 8px;
+}
+
+.cashflow-form.hidden {
+    display: block;
+}
+
+.cashflow-form.hidden .cashflow-body {
+    display: none;
+}
+
+.cashflow-form.hidden .cashflow-header {
+    padding: 6px 10px;
+}
+
+.cashflow-form.hidden .cashflow-header h3  {
+    font-size: 11px;
+    flex: 1;
+}
+
+.cashflow-form.hidden .deal-actions {
+    display: flex;
+}
+
+.cashflow-form.hidden .deal-actions button:not(:first-child) {
+    display: none;
+}
+
+.cashflow-form.dragging {
+    opacity: 0.5;
+}
+
+.cashflow-header {
+    background: #d4edda;
+    padding: 10px;
+    border-bottom: 1px solid #28a745;
+    border-radius: 6px 6px 0 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.cashflow-header h3 {
+    font-size: 13px;
+    font-weight: 600;
+    color: #155724;
+}
+
+.cashflow-body {
+    padding: 12px;
+}
+
+.drop-zone {
+    border: 2px dashed #28a745;
+    background: #d4edda;
+    padding: 8px;
+    border-radius: 4px;
+    margin-top: 8px;
+    text-align: center;
+    font-size: 11px;
+    color: #155724;
+    display: none;
+}
+
+.drop-zone.active {
+    display: block;
+}
+
+.deal-title, .cashflow-title {
+    display: flex;
+    align-items: center; 
+    gap: 5px;             
+}
+
+.arrow {
+    cursor: pointer;
+    transition: transform 0.2s;
+}
+
+.arrow.collapsed {
+    transform: rotate(-90deg);
+}
+
+.hidden {
+  display: none;
+}
+
